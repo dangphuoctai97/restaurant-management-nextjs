@@ -26,7 +26,7 @@ export default function LoginForm() {
     if (loginMutation.isPending) return
     try {
       const result = await loginMutation.mutateAsync(data)
-      toast(result.payload.message)
+      toast.success(result.payload.message)
     } catch (error: any) {
       handleErrorApi({
         error,
