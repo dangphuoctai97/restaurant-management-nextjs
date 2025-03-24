@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Roboto, Roboto_Mono } from 'next/font/google'
 import './globals.css'
+import AppProvider from '@/components/app-provider'
 
 const robotoSans = Roboto({
   variable: '--font-roboto-sans',
@@ -26,9 +28,12 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body className={`${robotoSans.variable} ${robotoMono.variable} antialiased`}>
-        <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        <AppProvider>
+          <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </AppProvider>
       </body>
     </html>
   )
