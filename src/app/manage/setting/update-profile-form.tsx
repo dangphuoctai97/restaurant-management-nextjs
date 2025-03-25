@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,28 +11,62 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useEffect, useRef, useState } from 'react'
-import { useAccoutProfile } from '@/queries/useAccount'
+import { useAccountMe, useUpdateMeMutation } from '@/queries/useAccount'
+import { toast } from 'sonner'
+import { handleErrorApi } from '@/lib/utils'
+import { useUploadMediaMutation } from '@/queries/useMedia'
 
 export default function UpdateProfileForm() {
   const [file, setFile] = useState<File | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
-
-  const { data } = useAccoutProfile()
+  const updateMeMutation = useUpdateMeMutation()
+  const uploadImageMutation = useUploadMediaMutation()
+  const { data, refetch } = useAccountMe()
 
   const form = useForm<UpdateMeBodyType>({
     resolver: zodResolver(UpdateMeBody),
     defaultValues: {
       name: '',
-      avatar: ''
+      avatar: undefined
     }
   })
+
+  const onSubmit = async (data: UpdateMeBodyType) => {
+    if (updateMeMutation.isPending) return
+    try {
+      let body = data
+      if (file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const uploadImageResult = await uploadImageMutation.mutateAsync(formData)
+        const imageUrl = uploadImageResult.payload.data
+        body = {
+          ...data,
+          avatar: imageUrl
+        }
+      }
+      const result = await updateMeMutation.mutateAsync(body)
+      refetch()
+      toast.success(result.payload.message)
+    } catch (error: any) {
+      handleErrorApi({
+        error,
+        setError: form.setError
+      })
+    }
+  }
+
+  const reset = () => {
+    form.reset()
+    setFile(null)
+  }
 
   useEffect(() => {
     if (data) {
       const { name, avatar } = data?.payload.data
       form.reset({
         name,
-        avatar: avatar ?? ''
+        avatar: avatar ?? undefined
       })
     }
   }, [data, form])
@@ -42,7 +77,12 @@ export default function UpdateProfileForm() {
 
   return (
     <Form {...form}>
-      <form noValidate className='grid auto-rows-max items-start gap-4 md:gap-8'>
+      <form
+        noValidate
+        className='grid auto-rows-max items-start gap-4 md:gap-8'
+        onSubmit={form.handleSubmit(onSubmit, (error) => console.log(error))}
+        onReset={reset}
+      >
         <Card x-chunk='dashboard-07-chunk-0'>
           <CardHeader>
             <CardTitle>Thông tin cá nhân</CardTitle>
@@ -52,7 +92,7 @@ export default function UpdateProfileForm() {
               <FormField
                 control={form.control}
                 name='avatar'
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <div className='flex gap-2 items-start justify-start'>
                       <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
