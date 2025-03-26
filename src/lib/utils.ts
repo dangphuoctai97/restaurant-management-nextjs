@@ -19,8 +19,16 @@ export const getAccessTokenFromLocalStorage = () => {
   return isBrowser ? localStorage.getItem('accessToken') : null
 }
 
+export const setAccessTokenFromLocalStorage = (value: string) => {
+  return isBrowser ?? localStorage.setItem('accessToken', value)
+}
+
 export const getRefeshTokenFromLocalStorage = () => {
   return isBrowser ? localStorage.getItem('refreshToken') : null
+}
+
+export const setRefeshTokenFromLocalStorage = (value: string) => {
+  return isBrowser ?? localStorage.setItem('RefeshToken', value)
 }
 
 export const handleErrorApi = ({

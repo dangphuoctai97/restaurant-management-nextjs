@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { useChangePasswordMutation } from '@/queries/useAccount'
 import { toast } from 'sonner'
-import { handleErrorApi } from '@/lib/utils'
+import { handleErrorApi, setAccessTokenFromLocalStorage, setRefeshTokenFromLocalStorage } from '@/lib/utils'
 
 export default function ChangePasswordForm() {
   const form = useForm<ChangePasswordBodyType>({
@@ -33,6 +33,8 @@ export default function ChangePasswordForm() {
     if (changePasswordMutation.isPending) return
     try {
       const result = await changePasswordMutation.mutateAsync(data)
+      setAccessTokenFromLocalStorage(result.payload.data.accessToken)
+      setRefeshTokenFromLocalStorage(result.payload.data.refreshToken)
       toast.success(result.payload.message)
       reset()
     } catch (error: any) {
