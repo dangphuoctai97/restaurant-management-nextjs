@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,9 @@ import { useForm } from 'react-hook-form'
 import { ChangePasswordBody, ChangePasswordBodyType } from '@/schemaValidations/account.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { useChangePasswordMutation } from '@/queries/useAccount'
+import { toast } from 'sonner'
+import { handleErrorApi } from '@/lib/utils'
 
 export default function ChangePasswordForm() {
   const form = useForm<ChangePasswordBodyType>({
@@ -19,9 +23,34 @@ export default function ChangePasswordForm() {
     }
   })
 
+  const changePasswordMutation = useChangePasswordMutation()
+
+  const reset = () => {
+    form.reset()
+  }
+
+  const onSubmit = async (data: ChangePasswordBodyType) => {
+    if (changePasswordMutation.isPending) return
+    try {
+      const result = await changePasswordMutation.mutateAsync(data)
+      toast.success(result.payload.message)
+      reset()
+    } catch (error: any) {
+      handleErrorApi({
+        error,
+        setError: form.setError
+      })
+    }
+  }
+
   return (
     <Form {...form}>
-      <form noValidate className='grid auto-rows-max items-start gap-4 md:gap-8'>
+      <form
+        noValidate
+        className='grid auto-rows-max items-start gap-4 md:gap-8'
+        onSubmit={form.handleSubmit(onSubmit, (error) => console.log(error))}
+        onReset={reset}
+      >
         <Card className='overflow-hidden' x-chunk='dashboard-07-chunk-4'>
           <CardHeader>
             <CardTitle>Đổi mật khẩu</CardTitle>
@@ -69,10 +98,12 @@ export default function ChangePasswordForm() {
                 )}
               />
               <div className=' items-center gap-2 md:ml-auto flex'>
-                <Button variant='outline' size='sm'>
+                <Button type='reset' variant='outline' size='sm'>
                   Hủy
                 </Button>
-                <Button size='sm'>Lưu thông tin</Button>
+                <Button type='submit' size='sm'>
+                  Lưu thông tin
+                </Button>
               </div>
             </div>
           </CardContent>
